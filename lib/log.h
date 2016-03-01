@@ -52,6 +52,7 @@ typedef enum
   ZLOG_RIPNG,
   ZLOG_BABEL,
   ZLOG_OSPF6,
+  ZLOG_LDP,
   ZLOG_ISIS,
   ZLOG_PIM,
   ZLOG_MASC
@@ -115,6 +116,7 @@ extern void zlog (struct zlog *zl, int priority, const char *format, ...)
   PRINTF_ATTRIBUTE(3, 4);
 
 /* Handy zlog functions. */
+extern void vzlog (struct zlog *zl, int priority, const char *format, va_list args);
 extern void zlog_err (const char *format, ...) PRINTF_ATTRIBUTE(1, 2);
 extern void zlog_warn (const char *format, ...) PRINTF_ATTRIBUTE(1, 2);
 extern void zlog_info (const char *format, ...) PRINTF_ATTRIBUTE(1, 2);

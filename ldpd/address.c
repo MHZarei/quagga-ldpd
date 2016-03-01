@@ -16,14 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <string.h>
+#include <zebra.h>
 
 #include "ldpd.h"
 #include "ldpe.h"
 #include "lde.h"
 #include "log.h"
+#include "ldp_debug.h"
 
 static int	gen_address_list_tlv(struct ibuf *, uint16_t, int,
 		    struct if_addr *);
@@ -74,6 +73,7 @@ send_address(struct nbr *nbr, int af, struct if_addr *if_addr, int withdraw)
 		return;
 	}
 
+	debug_msg_send("%s: lsr-id %s", msg_name(msg_type), inet_ntoa(nbr->id));
 	evbuf_enqueue(&nbr->tcp->wbuf, buf);
 
 	nbr_fsm(nbr, NBR_EVT_PDU_SENT);
@@ -83,6 +83,7 @@ int
 recv_address(struct nbr *nbr, char *buf, uint16_t len)
 {
 	struct ldp_msg		msg;
+	uint16_t		msg_type;
 	struct address_list_tlv	alt;
 	enum imsg_type		type;
 	struct lde_addr		lde_addr;
@@ -124,7 +125,8 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 	buf += sizeof(alt);
 	len -= sizeof(alt);
 
-	if (ntohs(msg.type) == MSG_TYPE_ADDR)
+	msg_type = ntohs(msg.type);
+	if (msg_type == MSG_TYPE_ADDR)
 		type = IMSG_ADDRESS_ADD;
 	else
 		type = IMSG_ADDRESS_DEL;
@@ -163,9 +165,8 @@ recv_address(struct nbr *nbr, char *buf, uint16_t len)
 			fatalx("recv_address: unknown af");
 		}
 
-		log_debug("%s: lsr-id %s address %s%s", __func__,
-		    inet_ntoa(nbr->id), log_addr(lde_addr.af, &lde_addr.addr),
-		    ntohs(msg.type) == MSG_TYPE_ADDR ? "" : " (withdraw)");
+		debug_msg_recv("%s: lsr-id %s address %s", msg_name(msg_type),
+		    inet_ntoa(nbr->id), log_addr(lde_addr.af, &lde_addr.addr));
 
 		ldpe_imsg_compose_lde(type, nbr->peerid, 0, &lde_addr,
 		    sizeof(lde_addr));
