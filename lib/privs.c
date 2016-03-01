@@ -248,10 +248,7 @@ zprivs_caps_init (struct zebra_privs_t *zprivs)
     }
 
   if ( !zprivs_state.syscaps_p )
-    {
-      fprintf (stderr, "privs_init: capabilities enabled, "
-                       "but no capabilities supplied\n");
-    }
+    return;
 
   /* we have caps, we have no need to ever change back the original user */
   if (zprivs_state.zuid)

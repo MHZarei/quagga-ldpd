@@ -16,14 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <string.h>
+#include <zebra.h>
 
 #include "ldpd.h"
 #include "ldp.h"
 #include "log.h"
 #include "ldpe.h"
+#include "ldp_debug.h"
 
 void
 send_notification_full(struct tcp_conn *tcp, struct notify_msg *nm)
@@ -86,7 +85,7 @@ void
 send_notification_nbr(struct nbr *nbr, uint32_t status_code, uint32_t msg_id,
     uint16_t msg_type)
 {
-	log_debug("%s: lsr-id %s, status %s", __func__, inet_ntoa(nbr->id),
+	debug_msg_send("notification: lsr-id %s status %s", inet_ntoa(nbr->id),
 	     status_code_name(status_code));
 
 	send_notification(status_code, nbr->tcp, msg_id, msg_type);
@@ -197,14 +196,9 @@ recv_notification(struct nbr *nbr, char *buf, uint16_t len)
 		}
 	}
 
-	if (st.status_code & htonl(STATUS_FATAL))
-		log_warnx("received notification from lsr-id %s: %s",
-		    inet_ntoa(nbr->id),
-		    status_code_name(ntohl(st.status_code)));
-	else
-		log_debug("received non-fatal notification from lsr-id "
-		    "%s: %s", inet_ntoa(nbr->id),
-		    status_code_name(ntohl(st.status_code)));
+	debug_msg_recv("notification: lsr-id %s: %s%s", inet_ntoa(nbr->id),
+	    status_code_name(ntohl(st.status_code)),
+	    (st.status_code & htonl(STATUS_FATAL)) ? " (fatal)" : "");
 
 	if (st.status_code & htonl(STATUS_FATAL)) {
 		if (nbr->state == NBR_STA_OPENSENT)
