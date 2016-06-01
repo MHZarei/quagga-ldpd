@@ -29,9 +29,6 @@
 #include "zebra/redistribute.h"
 #include "zebra/connected.h"
 #include "zebra/rib.h"
-#if defined(HAVE_MPLS)
-#include "zebra/zebra_mpls.h"
-#endif
 
 int kernel_route_rib (struct prefix *a, struct rib *old, struct rib *new) { return 0; }
 
@@ -62,12 +59,4 @@ void kernel_terminate (struct zebra_vrf *zvrf) { return; }
 #pragma weak route_read = kernel_init
 #else
 void route_read (struct zebra_vrf *zvrf) { return; }
-#endif
-
-#if defined(HAVE_MPLS)
-int kernel_add_lsp (zebra_lsp_t *l) { return 0; }
-
-int kernel_del_lsp (zebra_lsp_t *l) { return 0; }
-
-int kernel_upd_lsp (zebra_lsp_t *l) { return 0; }
 #endif

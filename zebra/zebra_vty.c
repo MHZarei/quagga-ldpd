@@ -28,14 +28,10 @@
 #include "table.h"
 #include "rib.h"
 #include "vrf.h"
-#if defined(HAVE_MPLS)
 #include "mpls.h"
-#endif
 
 #include "zebra/zserv.h"
-#if defined(HAVE_MPLS)
 #include "zebra/zebra_mpls.h"
-#endif
 
 static int do_show_ip_route(struct vty *vty, safi_t safi, vrf_id_t vrf_id);
 static void vty_show_ip_route_detail (struct vty *vty, struct route_node *rn,
@@ -59,13 +55,9 @@ zebra_static_ipv4_safi (struct vty *vty, safi_t safi, int add_cmd,
   const char *ifname;
   u_char flag = 0;
   vrf_id_t vrf_id = VRF_DEFAULT;
-#if defined(HAVE_MPLS)
   struct static_nh_label snh_label;
-#endif
   
-#if defined(HAVE_MPLS)
   memset (&snh_label, 0, sizeof (struct static_nh_label));
-#endif
   ret = str2prefix (dest_str, &p);
   if (ret <= 0)
     {
@@ -98,7 +90,6 @@ zebra_static_ipv4_safi (struct vty *vty, safi_t safi, int add_cmd,
   if (vrf_id_str)
     VTY_GET_INTEGER ("VRF ID", vrf_id, vrf_id_str);
 
-#if defined(HAVE_MPLS)
   /* Labels */
   if (label_str)
     {
@@ -109,7 +100,6 @@ zebra_static_ipv4_safi (struct vty *vty, safi_t safi, int add_cmd,
           return CMD_WARNING;
         }
     }
-#endif
 
   /* Null0 static route.  */
   if ((gate_str != NULL) && (strncasecmp (gate_str, "Null0", strlen (gate_str)) == 0))
@@ -119,19 +109,12 @@ zebra_static_ipv4_safi (struct vty *vty, safi_t safi, int add_cmd,
           vty_out (vty, "%% can not have flag %s with Null0%s", flag_str, VTY_NEWLINE);
           return CMD_WARNING;
         }
-#if defined(HAVE_MPLS)
       if (add_cmd)
         static_add_ipv4_safi (safi, &p, NULL, NULL, ZEBRA_FLAG_BLACKHOLE, distance, vrf_id,
 			      &snh_label);
       else
         static_delete_ipv4_safi (safi, &p, NULL, NULL, distance, vrf_id,
 				 &snh_label);
-#else
-      if (add_cmd)
-        static_add_ipv4_safi (safi, &p, NULL, NULL, ZEBRA_FLAG_BLACKHOLE, distance, vrf_id);
-      else
-        static_delete_ipv4_safi (safi, &p, NULL, NULL, distance, vrf_id);
-#endif
       return CMD_SUCCESS;
     }
 
@@ -154,19 +137,12 @@ zebra_static_ipv4_safi (struct vty *vty, safi_t safi, int add_cmd,
 
   if (gate_str == NULL)
   {
-#if defined(HAVE_MPLS)
     if (add_cmd)
       static_add_ipv4_safi (safi, &p, NULL, NULL, flag, distance, vrf_id,
 			    &snh_label);
     else
       static_delete_ipv4_safi (safi, &p, NULL, NULL, distance, vrf_id,
 			       &snh_label);
-#else
-    if (add_cmd)
-      static_add_ipv4_safi (safi, &p, NULL, NULL, flag, distance, vrf_id);
-    else
-      static_delete_ipv4_safi (safi, &p, NULL, NULL, distance, vrf_id);
-#endif
 
     return CMD_SUCCESS;
   }
@@ -179,19 +155,12 @@ zebra_static_ipv4_safi (struct vty *vty, safi_t safi, int add_cmd,
   else
     ifname = gate_str;
 
-#if defined(HAVE_MPLS)
   if (add_cmd)
     static_add_ipv4_safi (safi, &p, ifname ? NULL : &gate, ifname, flag, distance, vrf_id,
 			  &snh_label);
   else
     static_delete_ipv4_safi (safi, &p, ifname ? NULL : &gate, ifname, distance, vrf_id,
 			     &snh_label);
-#else
-  if (add_cmd)
-    static_add_ipv4_safi (safi, &p, ifname ? NULL : &gate, ifname, flag, distance, vrf_id);
-  else
-    static_delete_ipv4_safi (safi, &p, ifname ? NULL : &gate, ifname, distance, vrf_id);
-#endif
 
   return CMD_SUCCESS;
 }
@@ -1644,7 +1613,6 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
                break;
             }
 
-#if defined(HAVE_MPLS)
           /* Label information */
           if (nexthop->nh_label && nexthop->nh_label->num_labels)
             {
@@ -1652,7 +1620,6 @@ vty_show_ip_route_detail (struct vty *vty, struct route_node *rn, int mcast)
                        mpls_label2str (nexthop->nh_label->num_labels,
                                    nexthop->nh_label->label,  buf, BUFSIZ));
             }
-#endif
 
           vty_out (vty, "%s", VTY_NEWLINE);
         }
@@ -1765,7 +1732,6 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
             break;
         }
 
-#if defined(HAVE_MPLS)
         /* Label information */
         if (nexthop->nh_label && nexthop->nh_label->num_labels)
           {
@@ -1773,7 +1739,6 @@ vty_show_ip_route (struct vty *vty, struct route_node *rn, struct rib *rib)
                      mpls_label2str (nexthop->nh_label->num_labels,
                                  nexthop->nh_label->label,  buf, BUFSIZ));
           }
-#endif
 
       if (CHECK_FLAG (rib->flags, ZEBRA_FLAG_BLACKHOLE))
                vty_out (vty, ", bh");
@@ -2657,9 +2622,7 @@ static_config_ipv4 (struct vty *vty, safi_t safi, const char *cmd)
   struct zebra_vrf *zvrf;
   vrf_iter_t iter;
   int write;
-#if defined(HAVE_MPLS)
   char buf[BUFSIZ];
-#endif
 
   write = 0;
 
@@ -2704,13 +2667,11 @@ static_config_ipv4 (struct vty *vty, safi_t safi, const char *cmd)
             if (si->vrf_id != VRF_DEFAULT)
               vty_out (vty, " vrf %u", si->vrf_id);
 
-#if defined(HAVE_MPLS)
             /* Label information */
             if (si->snh_label.num_labels)
               vty_out (vty, " label %s",
                        mpls_label2str (si->snh_label.num_labels,
                                        si->snh_label.label,  buf, BUFSIZ));
-#endif
 
             vty_out (vty, "%s", VTY_NEWLINE);
 
@@ -2765,9 +2726,7 @@ static_ipv6_func (struct vty *vty, int add_cmd, const char *dest_str,
   u_char type = 0;
   vrf_id_t vrf_id = VRF_DEFAULT;
   u_char flag = 0;
-#if defined(HAVE_MPLS)
   struct static_nh_label snh_label;
-#endif
   
   ret = str2prefix (dest_str, &p);
   if (ret <= 0)
@@ -2802,10 +2761,8 @@ static_ipv6_func (struct vty *vty, int add_cmd, const char *dest_str,
   else
     distance = ZEBRA_STATIC_DISTANCE_DEFAULT;
 
-#if defined(HAVE_MPLS)
   /* Labels -- not supported for IPv6 for now. */
   memset (&snh_label, 0, sizeof (struct static_nh_label));
-#endif
 
   /* When gateway is valid IPv6 addrees, then gate is treated as
      nexthop address other case gate is treated as interface name. */
@@ -2841,17 +2798,10 @@ static_ipv6_func (struct vty *vty, int add_cmd, const char *dest_str,
   if (vrf_id_str)
     VTY_GET_INTEGER ("VRF ID", vrf_id, vrf_id_str);
 
-#if defined(HAVE_MPLS)
   if (add_cmd)
     static_add_ipv6 (&p, type, gate, ifname, flag, distance, vrf_id, &snh_label);
   else
     static_delete_ipv6 (&p, type, gate, ifname, distance, vrf_id, &snh_label);
-#else
-  if (add_cmd)
-    static_add_ipv6 (&p, type, gate, ifname, flag, distance, vrf_id);
-  else
-    static_delete_ipv6 (&p, type, gate, ifname, distance, vrf_id);
-#endif
 
   return CMD_SUCCESS;
 }

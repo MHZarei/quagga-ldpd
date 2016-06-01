@@ -22,8 +22,6 @@
 
 #include <zebra.h>
 
-#if defined(HAVE_MPLS)
-
 #include "prefix.h"
 #include "table.h"
 #include "memory.h"
@@ -1698,5 +1696,3 @@ zebra_mpls_init (void)
 {
   mpls_processq_init (&zebrad);
 }
-
-#endif /* HAVE_MPLS */

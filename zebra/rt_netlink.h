@@ -22,6 +22,8 @@
 #ifndef _ZEBRA_RT_NETLINK_H
 #define _ZEBRA_RT_NETLINK_H
 
+#include "zebra/zebra_mpls.h"
+
 #ifdef HAVE_NETLINK
 
 #define NL_PKT_BUF_SIZE 8192
@@ -44,6 +46,7 @@ nl_rtproto_to_str (u_char rtproto);
 
 extern int interface_lookup_netlink (struct zebra_vrf *zvrf);
 extern int netlink_route_read (struct zebra_vrf *zvrf);
+extern int netlink_mpls_multipath (int cmd, zebra_lsp_t *lsp);
 
 #endif /* HAVE_NETLINK */
 

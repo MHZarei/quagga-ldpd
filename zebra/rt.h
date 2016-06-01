@@ -26,19 +26,14 @@
 #include "prefix.h"
 #include "if.h"
 #include "zebra/rib.h"
-#if defined(HAVE_MPLS)
 #include "zebra/zebra_mpls.h"
-#endif
 
 extern int kernel_route_rib (struct prefix *, struct rib *, struct rib *);
 extern int kernel_add_route (struct prefix_ipv4 *, struct in_addr *, int, int);
 extern int kernel_address_add_ipv4 (struct interface *, struct connected *);
 extern int kernel_address_delete_ipv4 (struct interface *, struct connected *);
-
-#if defined(HAVE_MPLS)
 extern int kernel_add_lsp (zebra_lsp_t *);
 extern int kernel_upd_lsp (zebra_lsp_t *);
 extern int kernel_del_lsp (zebra_lsp_t *);
-#endif
 
 #endif /* _ZEBRA_RT_H */

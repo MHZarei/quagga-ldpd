@@ -31,7 +31,6 @@
 #include "vty.h"
 #include "memory.h"
 #include "mpls.h"
-#include "zebra/rt_netlink.h"
 #include "zebra/zserv.h"
 
 

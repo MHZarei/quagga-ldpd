@@ -114,9 +114,7 @@ enum node_type
   DUMP_NODE,			/* Packet dump node. */
   FORWARDING_NODE,		/* IP forwarding node. */
   PROTOCOL_NODE,                /* protocol filtering node */
-#if defined(HAVE_MPLS)
   MPLS_NODE,                    /* MPLS config node */
-#endif
   VTY_NODE,			/* Vty node. */
 };
 
@@ -515,9 +513,7 @@ struct cmd_token
 "(neighbor|interface|area|lsa|zebra|config|dbex|spf|route|lsdb|redistribute|hook|asbr|prefix|abr)"
 #define ISIS_STR "IS-IS information\n"
 #define AREA_TAG_STR "[area tag]\n"
-#if defined(HAVE_MPLS)
 #define MPLS_STR "MPLS information\n"
-#endif
 
 
 #define CONF_BACKUP_EXT ".sav"

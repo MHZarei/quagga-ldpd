@@ -86,13 +86,11 @@ struct memory_list memory_list_zebra[] =
   { MTYPE_RIB_DEST,		"RIB destination"		},
   { MTYPE_RIB_TABLE_INFO,	"RIB table info"		},
   { MTYPE_NETLINK_NAME,	"Netlink name"			},
-#if defined(HAVE_MPLS)
   { MTYPE_SLSP,                 "MPLS static LSP config"        },
   { MTYPE_LSP,                  "MPLS LSP object"               },
   { MTYPE_SNHLFE,               "MPLS static nexthop object"    },
   { MTYPE_NHLFE,                "MPLS nexthop object"           },
   { MTYPE_NH_LABEL,             "Nexthop label"                 },
-#endif
   { -1, NULL },
 };
 

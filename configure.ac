@@ -322,9 +322,28 @@ if test "${enable_fpm}" = "yes"; then
    AC_DEFINE(HAVE_FPM,,Forwarding Plane Manager support)
 fi
 
-if test "${enable_mpls}" = "yes" ; then
-  AC_DEFINE(HAVE_MPLS,,Compile MPLS support in)
+dnl ----------
+dnl MPLS check
+dnl ----------
+MPLS_METHOD=""
+AC_MSG_CHECKING(whether this OS has MPLS stack)
+if test "x${enable_mpls}" = "xyes"; then
+  case "$host" in
+    *-linux*)
+        AC_DEFINE(HAVE_MPLS,,Enable MPLS)
+        MPLS_METHOD="zebra_mpls_netlink.o"
+        AC_MSG_RESULT(Linux MPLS)
+    ;;
+    *)
+        AC_MSG_RESULT(Unsupported kernel)
+        MPLS_METHOD="zebra_mpls_null.o"
+    ;;
+  esac
+else
+  AC_MSG_RESULT(disabled)
+  MPLS_METHOD="zebra_mpls_null.o"
 fi
+AC_SUBST(MPLS_METHOD)
 
 if test "${enable_tcp_zebra}" = "yes"; then
   AC_DEFINE(HAVE_TCP_ZEBRA,,Use TCP for zebra communication)
