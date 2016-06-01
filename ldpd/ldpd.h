@@ -555,7 +555,6 @@ int			 cmdline_symset(char *);
 void		 kif_redistribute(const char *);
 int		 kr_change(struct kroute *);
 int		 kr_delete(struct kroute *);
-void		 kr_change_egress_label(int, int);
 int		 kmpw_set(struct kpw *);
 int		 kmpw_unset(struct kpw *);
 

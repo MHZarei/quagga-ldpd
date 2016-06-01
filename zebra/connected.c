@@ -393,8 +393,8 @@ connected_up_ipv6 (struct interface *ifp, struct connected *ifc)
     return;
 #endif
 
-  rib_add_ipv6 (ZEBRA_ROUTE_CONNECT, 0, &p, NULL, ifp->ifindex, ifp->vrf_id,
-                RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_UNICAST);
+  rib_add_ipv6 (ZEBRA_ROUTE_CONNECT, 0, &p, NULL, ifp->ifindex, MPLS_NO_LABEL,
+		ifp->vrf_id, RT_TABLE_MAIN, ifp->metric, 0, 0, SAFI_UNICAST);
 
   rib_update (ifp->vrf_id);
 
