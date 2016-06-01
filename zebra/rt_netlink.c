@@ -932,8 +932,8 @@ netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h,
       memcpy (&p.prefix, dest, 16);
       p.prefixlen = rtm->rtm_dst_len;
 
-      rib_add_ipv6 (ZEBRA_ROUTE_KERNEL, flags, &p, gate, index, vrf_id,
-                    table, 0, mtu, 0, SAFI_UNICAST);
+      rib_add_ipv6 (ZEBRA_ROUTE_KERNEL, flags, &p, gate, index, MPLS_NO_LABEL,
+		    vrf_id, table, 0, mtu, 0, SAFI_UNICAST);
     }
 #endif /* HAVE_IPV6 */
 
@@ -1168,8 +1168,8 @@ netlink_route_change (struct sockaddr_nl *snl, struct nlmsghdr *h,
         }
 
       if (h->nlmsg_type == RTM_NEWROUTE)
-        rib_add_ipv6 (ZEBRA_ROUTE_KERNEL, 0, &p, gate, index, vrf_id, table,
-                      0, mtu, 0, SAFI_UNICAST);
+        rib_add_ipv6 (ZEBRA_ROUTE_KERNEL, 0, &p, gate, index, MPLS_NO_LABEL,
+		      vrf_id, table, 0, mtu, 0, SAFI_UNICAST);
       else
         rib_delete_ipv6 (ZEBRA_ROUTE_KERNEL, 0, &p, gate, index, vrf_id,
                          SAFI_UNICAST);

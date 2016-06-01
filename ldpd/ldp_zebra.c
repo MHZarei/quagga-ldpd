@@ -28,6 +28,7 @@
 #include "command.h"
 #include "network.h"
 #include "linklist.h"
+#include "mpls.h"
 
 #include "ldpd.h"
 #include "ldpe.h"
@@ -89,17 +90,146 @@ ifc2kaddr(struct interface *ifp, struct connected *ifc, struct kaddr *ka)
 	}
 }
 
+static int
+zebra_send_mpls_lsp(u_char cmd, struct zclient *zclient, int af,
+    union ldpd_addr *nexthop, mpls_label_t in_label, mpls_label_t out_label)
+{
+	struct stream		*s;
+
+	debug_zebra_out("ILM %s label %s -> nexthop %s label %s",
+	    (cmd == ZEBRA_MPLS_LSP_ADD) ? "add" : "delete", log_label(in_label),
+	    log_addr(af, nexthop), log_label(out_label));
+
+	/* Reset stream. */
+	s = zclient->obuf;
+	stream_reset(s);
+
+	zclient_create_header(s, cmd, VRF_DEFAULT);
+	stream_putc(s, ZEBRA_LSP_LDP);
+	stream_putl(s, af);
+	switch (af) {
+	case AF_INET:
+		stream_put_in_addr(s, &nexthop->v4);
+		break;
+	case AF_INET6:
+		stream_write (s, (u_char *)&nexthop->v6, 16);
+		break;
+	default:
+		fatalx("zebra_send_mpls_lsp: unknown af");
+	}
+	stream_putl(s, in_label);
+	stream_putl(s, out_label);
+
+	/* Put length at the first point of the stream. */
+	stream_putw_at(s, 0, stream_get_endp(s));
+
+	return (zclient_send_message(zclient));
+}
+
+static int
+zebra_send_mpls_ftn(int delete, struct zclient *zclient, int af,
+    union ldpd_addr *prefix, uint8_t prefixlen, union ldpd_addr *nexthop,
+    mpls_label_t label)
+{
+	unsigned char		 cmd;
+	struct prefix_ipv4	 p4;
+	struct prefix_ipv6	 p6;
+	struct zapi_ipv4	 api4;
+	struct zapi_ipv6	 api6;
+	struct in_addr		*nexthop4;
+	struct in6_addr		*nexthop6;
+
+	debug_zebra_out("FTN %s %s/%d nexthop %s label %s",
+	    (delete) ? "delete" : "add", log_addr(af, prefix), prefixlen,
+	    log_addr(af, nexthop), log_label(label));
+
+	switch (af) {
+	case AF_INET:
+		p4.family = AF_INET;
+		p4.prefixlen = prefixlen;
+		p4.prefix = prefix->v4;
+		nexthop4 = &nexthop->v4;
+
+		api4.vrf_id = VRF_DEFAULT;
+		api4.type = ZEBRA_ROUTE_LDP;
+		api4.flags = 0;
+		api4.message = 0;
+		api4.safi = SAFI_UNICAST;
+		SET_FLAG(api4.message, ZAPI_MESSAGE_NEXTHOP);
+		api4.nexthop_num = 1;
+		api4.nexthop = &nexthop4;
+		api4.ifindex_num = 0;
+		SET_FLAG(api4.message, ZAPI_MESSAGE_LABEL);
+		api4.label = label;
+
+		if (delete)
+			cmd = ZEBRA_IPV4_ROUTE_DELETE;
+		else
+			cmd = ZEBRA_IPV4_ROUTE_ADD;
+		return (zapi_ipv4_route(cmd, zclient, &p4, &api4));
+	case AF_INET6:
+		p6.family = AF_INET6;
+		p6.prefixlen = prefixlen;
+		p6.prefix = prefix->v6;
+		nexthop6 = &nexthop->v6;
+
+		api6.vrf_id = VRF_DEFAULT;
+		api6.type = ZEBRA_ROUTE_LDP;
+		api6.flags = 0;
+		api6.message = 0;
+		api6.safi = SAFI_UNICAST;
+		SET_FLAG(api6.message, ZAPI_MESSAGE_NEXTHOP);
+		api6.nexthop_num = 1;
+		api6.nexthop = &nexthop6;
+		api6.ifindex_num = 0;
+		SET_FLAG(api6.message, ZAPI_MESSAGE_LABEL);
+		api6.label = label;
+
+		if (delete)
+			cmd = ZEBRA_IPV6_ROUTE_DELETE;
+		else
+			cmd = ZEBRA_IPV6_ROUTE_ADD;
+		return (zapi_ipv6_route(cmd, zclient, &p6, &api6));
+	default:
+		fatalx("zebra_send_mpls_ftn: unknown af");
+	}
+}
+
 int
 kr_change(struct kroute *kr)
 {
-	/* TODO */
+	if (kr->local_label < MPLS_LABEL_RESERVED_MAX ||
+	    kr->remote_label == NO_LABEL)
+		return (0);
+
+	/* FEC -> NHLFE */
+	if (kr->remote_label != MPLS_LABEL_IMPLNULL)
+		zebra_send_mpls_ftn(0, zclient, kr->af, &kr->prefix,
+		    kr->prefixlen, &kr->nexthop, kr->remote_label);
+
+	/* ILM -> NHLFE */
+	zebra_send_mpls_lsp(ZEBRA_MPLS_LSP_ADD, zclient, kr->af, &kr->nexthop,
+	    kr->local_label, kr->remote_label);
+
 	return (0);
 }
 
 int
 kr_delete(struct kroute *kr)
 {
-	/* TODO */
+	if (kr->local_label < MPLS_LABEL_RESERVED_MAX ||
+	    kr->remote_label == NO_LABEL)
+		return (0);
+
+	/* FEC -> NHLFE */
+	if (kr->remote_label != MPLS_LABEL_IMPLNULL)
+		zebra_send_mpls_ftn(1, zclient, kr->af, &kr->prefix,
+		    kr->prefixlen, &kr->nexthop, kr->remote_label);
+
+	/* ILM -> NHLFE */
+	zebra_send_mpls_lsp(ZEBRA_MPLS_LSP_DELETE, zclient, kr->af,
+	    &kr->nexthop, kr->local_label, kr->remote_label);
+
 	return (0);
 }
 
@@ -115,12 +245,6 @@ kmpw_unset(struct kpw *kpw)
 {
 	/* TODO */
 	return (0);
-}
-
-void
-kr_change_egress_label(int af, int was_implicit)
-{
-	/* TODO */
 }
 
 void

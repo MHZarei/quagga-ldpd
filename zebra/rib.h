@@ -557,8 +557,8 @@ static_delete_ipv4_safi (safi_t safi, struct prefix *p, struct in_addr *gate,
 
 extern int
 rib_add_ipv6 (int type, int flags, struct prefix_ipv6 *p,
-	      struct in6_addr *gate, ifindex_t ifindex, vrf_id_t vrf_id,
-	      int table_id, u_int32_t metric, u_int32_t mtu,
+	      struct in6_addr *gate, ifindex_t ifindex, mpls_label_t label,
+	      vrf_id_t vrf_id, int table_id, u_int32_t metric, u_int32_t mtu,
 	      u_char distance, safi_t safi);
 
 extern int

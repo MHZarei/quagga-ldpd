@@ -52,13 +52,6 @@ typedef struct zebra_slsp_t_ zebra_slsp_t;
 typedef struct zebra_nhlfe_t_ zebra_nhlfe_t;
 typedef struct zebra_lsp_t_ zebra_lsp_t;
 
-/* LSP types. */
-enum lsp_types_t
-{
-  ZEBRA_LSP_INVALID = 0,     /* Invalid. */
-  ZEBRA_LSP_STATIC = 1,      /* Static LSP. */
-};
-
 /*
  * (Outgoing) nexthop label forwarding entry configuration
  */
@@ -169,6 +162,34 @@ mpls_str2label (const char *label_str, u_int8_t *num_labels,
 char *
 mpls_label2str (u_int8_t num_labels, mpls_label_t *labels,
                 char *buf, int len);
+
+
+/*
+ * Install/update a static NHLFE for an LSP in the forwarding table. This may
+ * be a new LSP entry or a new NHLFE for an existing in-label or an update of
+ * the out-label for an existing NHLFE (update case).
+ */
+int
+mpls_lsp_install (struct zebra_vrf *zvrf, enum lsp_types_t type,
+		  mpls_label_t in_label, mpls_label_t out_label,
+		  enum nexthop_types_t gtype, union g_addr *gate,
+		  char *ifname, ifindex_t ifindex);
+
+/*
+ * Uninstall a particular static NHLFE in the forwarding table. If this is
+ * the only NHLFE, the entire LSP forwarding entry has to be deleted.
+ */
+int
+mpls_lsp_uninstall (struct zebra_vrf *zvrf, enum lsp_types_t type,
+		    mpls_label_t in_label, enum nexthop_types_t gtype,
+		    union g_addr *gate, char *ifname, ifindex_t ifindex);
+
+/*
+ * Uninstall all LDP NHLFEs for a particular LSP forwarding entry.
+ * If no other NHLFEs exist, the entry would be deleted.
+ */
+void
+mpls_ldp_lsp_uninstall_all (struct hash_backet *backet, void *ctxt);
 
 /*
  * Check that the label values used in LSP creation are consistent. The
@@ -291,6 +312,8 @@ nhlfe_type2str(enum lsp_types_t lsp_type)
     {
       case ZEBRA_LSP_STATIC:
         return "Static";
+      case ZEBRA_LSP_LDP:
+        return "LDP";
       default:
         return "Unknown";
     }

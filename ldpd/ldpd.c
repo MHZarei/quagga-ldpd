@@ -1185,10 +1185,6 @@ merge_af(int af, struct ldpd_af_conf *af_conf, struct ldpd_af_conf *xa)
 			lde_change_egress_label(af, af_conf->flags &
 			    F_LDPD_AF_EXPNULL);
 			break;
-		case PROC_MAIN:
-			kr_change_egress_label(af, af_conf->flags &
-			    F_LDPD_AF_EXPNULL);
-			break;
 		default:
 			break;
 		}
