@@ -843,6 +843,10 @@ zread_ipv4_add (struct zserv *client, u_short length, vrf_id_t vrf_id)
   
   /* Type, flags, message. */
   rib->type = stream_getc (s);
+#if !defined(HAVE_MPLS)
+  if (rib->type == ZEBRA_ROUTE_LDP)
+    return 0;
+#endif
   rib->flags = stream_getc (s);
   message = stream_getc (s); 
   safi = stream_getw (s);
@@ -1061,6 +1065,10 @@ zread_ipv6_add (struct zserv *client, u_short length, vrf_id_t vrf_id)
 
   /* Type, flags, message. */
   api.type = stream_getc (s);
+#if !defined(HAVE_MPLS)
+  if (api.type == ZEBRA_ROUTE_LDP)
+    return 0;
+#endif
   api.flags = stream_getc (s);
   api.message = stream_getc (s);
   api.safi = stream_getw (s);
@@ -1272,6 +1280,7 @@ static int
 zread_mpls_lsp (int command, struct zserv *client, u_short length,
 		vrf_id_t vrf_id)
 {
+#if defined(HAVE_MPLS)
   struct stream *s;
   enum lsp_types_t type;
   int af;
@@ -1314,6 +1323,9 @@ zread_mpls_lsp (int command, struct zserv *client, u_short length,
     ret = mpls_lsp_uninstall (zvrf, type, in_label, gtype, &gate, NULL, 0);
 
   return ret;
+#else
+  return 0;
+#endif
 }
 
 /* If client sent routes of specific type, zebra removes it

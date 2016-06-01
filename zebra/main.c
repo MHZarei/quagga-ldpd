@@ -41,9 +41,7 @@
 #include "zebra/irdp.h"
 #include "zebra/rtadv.h"
 #include "zebra/zebra_fpm.h"
-#if defined(HAVE_MPLS)
 #include "zebra/zebra_mpls.h"
-#endif
 
 /* Zebra instance */
 struct zebra_t zebrad =
@@ -414,9 +412,7 @@ main (int argc, char **argv)
 #ifdef HAVE_IRDP
   irdp_init();
 #endif
-#if defined(HAVE_MPLS)
   zebra_mpls_init ();
-#endif
 
   /* For debug purpose. */
   /* SET_FLAG (zebra_debug_event, ZEBRA_DEBUG_EVENT); */

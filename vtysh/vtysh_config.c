@@ -260,10 +260,8 @@ vtysh_config_parse_line (const char *line)
 	config = config_get (AAA_NODE, line);
       else if (strncmp (line, "ip protocol", strlen ("ip protocol")) == 0)
 	config = config_get (PROTOCOL_NODE, line);
-#if defined(HAVE_MPLS)
       else if (strncmp (line, "mpls", strlen ("mpls")) == 0)
 	config = config_get (MPLS_NODE, line);
-#endif
       else
 	{
 	  if (strncmp (line, "log", strlen ("log")) == 0
@@ -303,21 +301,12 @@ vtysh_config_parse (char *line)
 
 /* Macro to check delimiter is needed between each configuration line
  * or not. */
-#if defined(HAVE_MPLS)
 #define NO_DELIMITER(I)  \
   ((I) == ACCESS_NODE || (I) == PREFIX_NODE || (I) == IP_NODE \
    || (I) == AS_LIST_NODE || (I) == COMMUNITY_LIST_NODE || \
    (I) == ACCESS_IPV6_NODE || (I) == PREFIX_IPV6_NODE \
    || (I) == SERVICE_NODE || (I) == FORWARDING_NODE || (I) == DEBUG_NODE \
    || (I) == AAA_NODE || (I) == MPLS_NODE)
-#else
-#define NO_DELIMITER(I)  \
-  ((I) == ACCESS_NODE || (I) == PREFIX_NODE || (I) == IP_NODE \
-   || (I) == AS_LIST_NODE || (I) == COMMUNITY_LIST_NODE || \
-   (I) == ACCESS_IPV6_NODE || (I) == PREFIX_IPV6_NODE \
-   || (I) == SERVICE_NODE || (I) == FORWARDING_NODE || (I) == DEBUG_NODE \
-   || (I) == AAA_NODE)
-#endif
 
 /* Display configuration to file pointer. */
 void

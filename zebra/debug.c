@@ -30,9 +30,7 @@ unsigned long zebra_debug_packet;
 unsigned long zebra_debug_kernel;
 unsigned long zebra_debug_rib;
 unsigned long zebra_debug_fpm;
-#if defined(HAVE_MPLS)
 unsigned long zebra_debug_mpls;
-#endif
 
 DEFUN (show_debugging_zebra,
        show_debugging_zebra_cmd,
@@ -77,10 +75,8 @@ DEFUN (show_debugging_zebra,
 
   if (IS_ZEBRA_DEBUG_FPM)
     vty_out (vty, "  Zebra FPM debugging is on%s", VTY_NEWLINE);
-#if defined(HAVE_MPLS)
   if (IS_ZEBRA_DEBUG_MPLS)
     vty_out (vty, "  Zebra MPLS debugging is on%s", VTY_NEWLINE);
-#endif
 
   return CMD_SUCCESS;
 }
@@ -369,13 +365,11 @@ config_write_debug (struct vty *vty)
       vty_out (vty, "debug zebra fpm%s", VTY_NEWLINE);
       write++;
     }
-#if defined(HAVE_MPLS)
   if (IS_ZEBRA_DEBUG_MPLS)
     {
       vty_out (vty, "debug zebra mpls%s", VTY_NEWLINE);
       write++;
     }
-#endif
   return write;
 }
 
@@ -387,9 +381,7 @@ zebra_debug_init (void)
   zebra_debug_kernel = 0;
   zebra_debug_rib = 0;
   zebra_debug_fpm = 0;
-#if defined(HAVE_MPLS)
   zebra_debug_mpls = 0;
-#endif
 
   install_node (&debug_node, config_write_debug);
 

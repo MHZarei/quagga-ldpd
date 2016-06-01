@@ -43,18 +43,14 @@
 #include "thread.h"
 #include "privs.h"
 #include "vrf.h"
-#if defined(HAVE_MPLS)
 #include "mpls.h"
-#endif
 
 #include "zebra/zserv.h"
 #include "zebra/rt.h"
 #include "zebra/redistribute.h"
 #include "zebra/interface.h"
 #include "zebra/debug.h"
-#if defined(HAVE_MPLS)
 #include "zebra/zebra_mpls.h"
-#endif
 
 #include "rt_netlink.h"
 
@@ -72,7 +68,6 @@ static const struct message nlmsg_str[] = {
 };
 
 
-#if defined(HAVE_MPLS)
 /* TODO - Temporary definitions, need to refine. */
 #ifndef RTA_VIA
 #define RTA_VIA     18
@@ -80,7 +75,6 @@ static const struct message nlmsg_str[] = {
 #define RTA_PREF    RTA_NEWDST+1
 #define RTA_ENCAP_TYPE RTA_PREF+1
 #define RTA_ENCAP   RTA_ENCAP_TYPE+1
-#endif
 
 #ifndef LWTUNNEL_ENCAP_MPLS
 #define LWTUNNEL_ENCAP_MPLS  1
@@ -815,12 +809,10 @@ netlink_routing_table (struct sockaddr_nl *snl, struct nlmsghdr *h,
   if (rtm->rtm_src_len != 0)
     return 0;
 
-#if defined(HAVE_MPLS)
   /* We don't care about change notifications for the MPLS table. */
   /* TODO: Revisit this. */
   if (rtm->rtm_family == AF_MPLS)
     return 0;
-#endif
 
    /* Route which inserted by Zebra. */
   if (rtm->rtm_protocol == RTPROT_ZEBRA)
@@ -1004,12 +996,10 @@ netlink_route_change (struct sockaddr_nl *snl, struct nlmsghdr *h,
       return 0;
     }
 
-#if defined(HAVE_MPLS)
   /* We don't care about change notifications for the MPLS table. */
   /* TODO: Revisit this. */
   if (rtm->rtm_family == AF_MPLS)
     return 0;
-#endif
 
   len = h->nlmsg_len - NLMSG_LENGTH (sizeof (struct rtmsg));
   if (len < 0)
@@ -1438,7 +1428,6 @@ addattr32 (struct nlmsghdr *n, size_t maxlen, int type, int data)
   return addattr_l(n, maxlen, type, &data, sizeof(u_int32_t));
 }
 
-#if defined(HAVE_MPLS)
 /* Some more utility functions from iproute2 */
 static struct rtattr *
 addattr_nest(struct nlmsghdr *n, int maxlen, int type)
@@ -1471,7 +1460,6 @@ rta_nest_end(struct rtattr *rta, struct rtattr *nest)
   nest->rta_len = (u_char *)RTA_TAIL(rta) - (u_char *)nest;
   return rta->rta_len;
 }
-#endif /* HAVE_MPLS */
 
 static int
 netlink_talk_filter (struct sockaddr_nl *snl, struct nlmsghdr *h,
@@ -1542,7 +1530,6 @@ _netlink_route_nl_add_gateway_info (u_char route_family, u_char gw_family,
                                     size_t req_size, int bytelen,
                                     struct nexthop *nexthop)
 {
-#if defined(HAVE_MPLS)
   if (route_family == AF_MPLS)
     {
       struct gw_family_t gw_fam;
@@ -1555,7 +1542,6 @@ _netlink_route_nl_add_gateway_info (u_char route_family, u_char gw_family,
       addattr_l (nlmsg, req_size, RTA_VIA, &gw_fam.family, bytelen+2);
       return;
     }
-#endif
   if (gw_family == AF_INET)
     addattr_l (nlmsg, req_size, RTA_GATEWAY, &nexthop->gate.ipv4, bytelen);
   else
@@ -1568,7 +1554,6 @@ _netlink_route_rta_add_gateway_info (u_char route_family, u_char gw_family,
                                      size_t req_size, int bytelen,
                                      struct nexthop *nexthop)
 {
-#if defined(HAVE_MPLS)
   if (route_family == AF_MPLS)
     {
       struct gw_family_t gw_fam;
@@ -1582,7 +1567,6 @@ _netlink_route_rta_add_gateway_info (u_char route_family, u_char gw_family,
       rtnh->rtnh_len += RTA_LENGTH (bytelen + 2);
       return;
     }
-#endif
   if (gw_family == AF_INET)
     rta_addattr_l (rta, req_size, RTA_GATEWAY, &nexthop->gate.ipv4, bytelen);
   else
@@ -1610,7 +1594,6 @@ _netlink_route_build_singlepath(
         struct rtmsg *rtmsg,
         size_t req_size)
 {
-#if defined(HAVE_MPLS)
   struct nexthop_label *nh_label;
   mpls_lse_t out_lse[MPLS_MAX_LABELS];
   char label_buf[100];
@@ -1667,8 +1650,6 @@ _netlink_route_build_singlepath(
             }
         }
     }
-#endif /* HAVE_MPLS */
-
 
   if (CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_ONLINK))
     rtmsg->rtm_flags |= RTNH_F_ONLINK;
@@ -1681,21 +1662,12 @@ _netlink_route_build_singlepath(
         addattr_l (nlmsg, req_size, RTA_PREFSRC,
                    &nexthop->src.ipv4, bytelen);
 
-#if defined(HAVE_MPLS)
       if (IS_ZEBRA_DEBUG_KERNEL)
         zlog_debug("netlink_route_multipath() (%s): "
                    "nexthop via %s %s if %u",
                    routedesc,
                    inet_ntoa (nexthop->gate.ipv4),
                    label_buf, nexthop->ifindex);
-#else
-      if (IS_ZEBRA_DEBUG_KERNEL)
-        zlog_debug("netlink_route_multipath() (%s): "
-                   "nexthop via %s if %u",
-                   routedesc,
-                   inet_ntoa (nexthop->gate.ipv4),
-                   nexthop->ifindex);
-#endif
     }
 #ifdef HAVE_IPV6
   if (nexthop->type == NEXTHOP_TYPE_IPV6
@@ -1705,21 +1677,12 @@ _netlink_route_build_singlepath(
       _netlink_route_nl_add_gateway_info (rtmsg->rtm_family, AF_INET6, nlmsg,
                                           req_size, bytelen, nexthop);
 
-#if defined(HAVE_MPLS)
       if (IS_ZEBRA_DEBUG_KERNEL)
         zlog_debug("netlink_route_multipath() (%s): "
                    "nexthop via %s %s if %u",
                    routedesc,
                    inet6_ntoa (nexthop->gate.ipv6),
                    label_buf, nexthop->ifindex);
-#else
-      if (IS_ZEBRA_DEBUG_KERNEL)
-        zlog_debug("netlink_route_multipath() (%s): "
-                   "nexthop via %s if %u",
-                   routedesc,
-                   inet6_ntoa (nexthop->gate.ipv6),
-                   nexthop->ifindex);
-#endif
     }
 #endif /* HAVE_IPV6 */
   if (nexthop->type == NEXTHOP_TYPE_IFINDEX
@@ -1774,18 +1737,15 @@ _netlink_route_build_multipath(
         struct rtmsg *rtmsg,
         union g_addr **src)
 {
-#if defined(HAVE_MPLS)
   struct nexthop_label *nh_label;
   mpls_lse_t out_lse[MPLS_MAX_LABELS];
   char label_buf[100];
-#endif
 
   rtnh->rtnh_len = sizeof (*rtnh);
   rtnh->rtnh_flags = 0;
   rtnh->rtnh_hops = 0;
   rta->rta_len += rtnh->rtnh_len;
 
-#if defined(HAVE_MPLS)
   label_buf[0] = '\0';
   /* outgoing label - either as NEWDST (in the case of LSR) or as ENCAP
    * (in the case of LER)
@@ -1843,7 +1803,6 @@ _netlink_route_build_multipath(
             }
         }
     }
-#endif /* HAVE_MPLS */
 
   if (CHECK_FLAG (nexthop->flags, NEXTHOP_FLAG_ONLINK))
     rtnh->rtnh_flags |= RTNH_F_ONLINK;
@@ -1856,21 +1815,12 @@ _netlink_route_build_multipath(
       if (nexthop->src.ipv4.s_addr)
         *src = &nexthop->src;
 
-#if defined(HAVE_MPLS)
       if (IS_ZEBRA_DEBUG_KERNEL)
         zlog_debug("netlink_route_multipath() (%s): "
                    "nexthop via %s %s if %u",
                    routedesc,
                    inet_ntoa (nexthop->gate.ipv4),
                    label_buf, nexthop->ifindex);
-#else
-      if (IS_ZEBRA_DEBUG_KERNEL)
-        zlog_debug("netlink_route_multipath() (%s): "
-                   "nexthop via %s if %u",
-                   routedesc,
-                   inet_ntoa (nexthop->gate.ipv4),
-                   nexthop->ifindex);
-#endif
     }
 
 #ifdef HAVE_IPV6
@@ -1881,21 +1831,12 @@ _netlink_route_build_multipath(
       _netlink_route_rta_add_gateway_info (rtmsg->rtm_family, AF_INET6, rta,
                                        rtnh, NL_PKT_BUF_SIZE, bytelen, nexthop);
 
-#if defined(HAVE_MPLS)
       if (IS_ZEBRA_DEBUG_KERNEL)
         zlog_debug("netlink_route_multipath() (%s): "
                    "nexthop via %s %s if %u",
                    routedesc,
                    inet6_ntoa (nexthop->gate.ipv6),
                    label_buf, nexthop->ifindex);
-#else
-      if (IS_ZEBRA_DEBUG_KERNEL)
-        zlog_debug("netlink_route_multipath() (%s): "
-                   "nexthop via %s if %u",
-                   routedesc,
-                   inet6_ntoa (nexthop->gate.ipv6),
-                   nexthop->ifindex);
-#endif
     }
 #endif /* HAVE_IPV6 */
   /* ifindex */
@@ -1925,7 +1866,6 @@ _netlink_route_build_multipath(
     }
 }
 
-#if defined(HAVE_MPLS)
 static inline void
 _netlink_mpls_build_singlepath(
         const char *routedesc,
@@ -1962,7 +1902,6 @@ _netlink_mpls_build_multipath(
   _netlink_route_build_multipath(routedesc, bytelen, nhlfe->nexthop,
                                  rta, rtnh, rtmsg, src);
 }
-#endif /* HAVE_MPLS */
 
 /* Log debug information for netlink_route_multipath
  * if debug logging is enabled.
@@ -1995,7 +1934,6 @@ _netlink_route_debug(
     }
 }
 
-#if defined(HAVE_MPLS)
 static void
 _netlink_mpls_debug(
         int cmd,
@@ -2006,8 +1944,6 @@ _netlink_mpls_debug(
     zlog_debug ("netlink_mpls_multipath() (%s): %s %u/20",
                 routedesc, lookup (nlmsg_str, cmd), label);
 }
-#endif
-
 
 /* Routing table change via netlink interface. */
 static int
@@ -2288,11 +2224,10 @@ kernel_address_delete_ipv4 (struct interface *ifp, struct connected *ifc)
   return netlink_address (RTM_DELADDR, AF_INET, ifp, ifc);
 }
 
-#if defined(HAVE_MPLS)
 /*
  * MPLS label forwarding table change via netlink interface.
  */
-static int
+int
 netlink_mpls_multipath (int cmd, zebra_lsp_t *lsp)
 {
   mpls_lse_t lse;
@@ -2466,101 +2401,6 @@ netlink_mpls_multipath (int cmd, zebra_lsp_t *lsp)
   return netlink_talk (&req.n, &zvrf->netlink_cmd, zvrf);
 }
 
-/*
- * Handle failure in LSP install, clear flags for NHLFE.
- */
-static inline void
-clear_nhlfe_installed (zebra_lsp_t *lsp)
-{
-  zebra_nhlfe_t *nhlfe;
-  struct nexthop *nexthop;
-
-  for (nhlfe = lsp->nhlfe_list; nhlfe; nhlfe = nhlfe->next)
-    {
-      nexthop = nhlfe->nexthop;
-      if (!nexthop)
-        continue;
-
-      UNSET_FLAG (nhlfe->flags, NHLFE_FLAG_INSTALLED);
-      UNSET_FLAG (nexthop->flags, NEXTHOP_FLAG_FIB);
-    }
-}
-
-/*
- * Install Label Forwarding entry into the kernel.
- */
-int
-kernel_add_lsp (zebra_lsp_t *lsp)
-{
-  int ret;
-
-  if (!lsp || !lsp->best_nhlfe) // unexpected
-    return -1;
-
-  UNSET_FLAG (lsp->flags, LSP_FLAG_CHANGED);
-  ret = netlink_mpls_multipath (RTM_NEWROUTE, lsp);
-  if (!ret)
-    SET_FLAG (lsp->flags, LSP_FLAG_INSTALLED);
-  else
-    clear_nhlfe_installed (lsp);
-
-  return ret;
-}
-
-/*
- * Update Label Forwarding entry in the kernel. This means that the Label
- * forwarding entry is already installed and needs an update - either a new
- * path is to be added, an installed path has changed (e.g., outgoing label)
- * or an installed path (but not all paths) has to be removed.
- * TODO: Performs a DEL followed by ADD now, need to change to REPLACE. Note
- * that REPLACE was originally implemented for IPv4 nexthops but removed as
- * it was not functioning when moving from swap to PHP as that was signaled
- * through the metric field (before kernel-MPLS). This shouldn't be an issue
- * any longer, so REPLACE can be reintroduced.
- */
-int
-kernel_upd_lsp (zebra_lsp_t *lsp)
-{
-  int ret;
-
-  if (!lsp || !lsp->best_nhlfe) // unexpected
-    return -1;
-
-  UNSET_FLAG (lsp->flags, LSP_FLAG_CHANGED);
-
-  /* First issue a DEL and clear the installed flag. */
-  netlink_mpls_multipath (RTM_DELROUTE, lsp);
-  UNSET_FLAG (lsp->flags, LSP_FLAG_INSTALLED);
-
-  /* Then issue an ADD. */
-  ret = netlink_mpls_multipath (RTM_NEWROUTE, lsp);
-  if (!ret)
-    SET_FLAG (lsp->flags, LSP_FLAG_INSTALLED);
-  else
-    clear_nhlfe_installed (lsp);
-
-  return ret;
-}
-
-/*
- * Delete Label Forwarding entry from the kernel.
- */
-int
-kernel_del_lsp (zebra_lsp_t *lsp)
-{
-  if (!lsp) // unexpected
-    return -1;
-
-  if (CHECK_FLAG (lsp->flags, LSP_FLAG_INSTALLED))
-    {
-      netlink_mpls_multipath (RTM_DELROUTE, lsp);
-      UNSET_FLAG (lsp->flags, LSP_FLAG_INSTALLED);
-    }
-
-  return 0;
-}
-#endif /* HAVE_MPLS */
- 
 extern struct thread_master *master;
 
 /* Kernel route reflection. */

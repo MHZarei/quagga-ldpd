@@ -83,10 +83,8 @@ struct zebra_t
   struct work_queue *ribq;
   struct meta_queue *mq;
 
-#if defined(HAVE_MPLS)
   /* LSP work queue */
   struct work_queue *lsp_process_q;
-#endif
 };
 
 /* Count prefix size from mask length */

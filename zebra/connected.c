@@ -35,9 +35,7 @@
 #include "zebra/redistribute.h"
 #include "zebra/interface.h"
 #include "zebra/connected.h"
-#if defined(HAVE_MPLS)
 #include "zebra/zebra_mpls.h"
-#endif
 #include "zebra/debug.h"
 
 extern struct zebra_t zebrad;
@@ -204,7 +202,6 @@ connected_up_ipv4 (struct interface *ifp, struct connected *ifc)
 
   rib_update (ifp->vrf_id);
 
-#if defined(HAVE_MPLS)
   /* Schedule LSP forwarding entries for processing, if appropriate. */
   if (ifp->vrf_id == VRF_DEFAULT)
     {
@@ -213,7 +210,6 @@ connected_up_ipv4 (struct interface *ifp, struct connected *ifc)
                 ifp->vrf_id, ifp->name);
       mpls_mark_lsps_for_processing (vrf_info_lookup(ifp->vrf_id));
     }
-#endif
 }
 
 /* Add connected IPv4 route to the interface. */
@@ -328,7 +324,6 @@ connected_down_ipv4 (struct interface *ifp, struct connected *ifc)
 
   rib_update (ifp->vrf_id);
 
-#if defined(HAVE_MPLS)
   /* Schedule LSP forwarding entries for processing, if appropriate. */
   if (ifp->vrf_id == VRF_DEFAULT)
     {
@@ -337,7 +332,6 @@ connected_down_ipv4 (struct interface *ifp, struct connected *ifc)
                 ifp->vrf_id, ifp->name);
       mpls_mark_lsps_for_processing (vrf_info_lookup(ifp->vrf_id));
     }
-#endif
 }
 
 /* Delete connected IPv4 route to the interface. */
@@ -361,7 +355,6 @@ connected_delete_ipv4 (struct interface *ifp, int flags, struct in_addr *addr,
 
   rib_update (ifp->vrf_id);
 
-#if defined(HAVE_MPLS)
   /* Schedule LSP forwarding entries for processing, if appropriate. */
   if (ifp->vrf_id == VRF_DEFAULT)
     {
@@ -370,7 +363,6 @@ connected_delete_ipv4 (struct interface *ifp, int flags, struct in_addr *addr,
                 ifp->vrf_id, ifp->name);
       mpls_mark_lsps_for_processing (vrf_info_lookup(ifp->vrf_id));
     }
-#endif
 }
 
 #ifdef HAVE_IPV6
@@ -398,7 +390,6 @@ connected_up_ipv6 (struct interface *ifp, struct connected *ifc)
 
   rib_update (ifp->vrf_id);
 
-#if defined(HAVE_MPLS)
   /* Schedule LSP forwarding entries for processing, if appropriate. */
   if (ifp->vrf_id == VRF_DEFAULT)
     {
@@ -407,7 +398,6 @@ connected_up_ipv6 (struct interface *ifp, struct connected *ifc)
                 ifp->vrf_id, ifp->name);
       mpls_mark_lsps_for_processing (vrf_info_lookup(ifp->vrf_id));
     }
-#endif
 }
 
 /* Add connected IPv6 route to the interface. */
@@ -492,7 +482,6 @@ connected_down_ipv6 (struct interface *ifp, struct connected *ifc)
 
   rib_update (ifp->vrf_id);
 
-#if defined(HAVE_MPLS)
   /* Schedule LSP forwarding entries for processing, if appropriate. */
   if (ifp->vrf_id == VRF_DEFAULT)
     {
@@ -501,7 +490,6 @@ connected_down_ipv6 (struct interface *ifp, struct connected *ifc)
                 ifp->vrf_id, ifp->name);
       mpls_mark_lsps_for_processing (vrf_info_lookup(ifp->vrf_id));
     }
-#endif
 }
 
 void
@@ -524,7 +512,6 @@ connected_delete_ipv6 (struct interface *ifp, struct in6_addr *address,
 
   rib_update (ifp->vrf_id);
 
-#if defined(HAVE_MPLS)
   /* Schedule LSP forwarding entries for processing, if appropriate. */
   if (ifp->vrf_id == VRF_DEFAULT)
     {
@@ -533,6 +520,5 @@ connected_delete_ipv6 (struct interface *ifp, struct in6_addr *address,
                 ifp->vrf_id, ifp->name);
       mpls_mark_lsps_for_processing (vrf_info_lookup(ifp->vrf_id));
     }
-#endif
 }
 #endif /* HAVE_IPV6 */
