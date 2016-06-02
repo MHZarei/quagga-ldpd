@@ -21,6 +21,7 @@
 %{!?with_rtadv:			%global	with_rtadv		1 }
 %{!?with_isisd:			%global	with_isisd		1 }
 %{!?with_pimd:			%global	with_pimd		1 }
+%{!?with_mpls:			%global	with_mpls		0 }
 %{!?with_ldpd:			%global	with_ldpd		0 }
 %{!?with_shared:		%global	with_shared		1 }
 %{!?with_multipath:		%global	with_multipath		64 }
@@ -235,6 +236,11 @@ developing OSPF-API and quagga applications.
 	--enable-isisd \
 %else
 	--disable-isisd \
+%endif
+%if %{with_mpls}
+	--enable-mpls \
+%else
+	--disable-mpls \
 %endif
 %if %{with_ldpd}
 	--enable-ldpd \
