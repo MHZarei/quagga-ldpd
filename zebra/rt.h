@@ -35,5 +35,6 @@ extern int kernel_address_delete_ipv4 (struct interface *, struct connected *);
 extern int kernel_add_lsp (zebra_lsp_t *);
 extern int kernel_upd_lsp (zebra_lsp_t *);
 extern int kernel_del_lsp (zebra_lsp_t *);
+extern void mpls_kernel_init (void);
 
 #endif /* _ZEBRA_RT_H */

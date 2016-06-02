@@ -21,6 +21,10 @@
  */
 
 #include <zebra.h>
+#if defined HAVE_MPLS && defined __OpenBSD__
+#include <netmpls/mpls.h>
+#include "zebra/zebra_mpls.h"
+#endif
 
 #include "if.h"
 #include "prefix.h"
@@ -39,7 +43,8 @@ extern struct zebra_privs_t zserv_privs;
 /* kernel socket export */
 extern int rtm_write (int message, union sockunion *dest,
                       union sockunion *mask, union sockunion *gate,
-                      unsigned int index, int zebra_flags, int metric);
+                      union sockunion *mpls, unsigned int index,
+                      int zebra_flags, int metric);
 
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
 /* Adjust netmask socket length. Return value is a adjusted sin_len
@@ -73,6 +78,10 @@ kernel_rtm_ipv4 (int cmd, struct prefix *p, struct rib *rib)
 {
   struct sockaddr_in *mask = NULL;
   struct sockaddr_in sin_dest, sin_mask, sin_gate;
+#if defined HAVE_MPLS && defined __OpenBSD__
+  struct sockaddr_mpls smpls;
+#endif
+  union sockunion *smplsp = NULL;
   struct nexthop *nexthop, *tnexthop;
   int recursing;
   int nexthop_num = 0;
@@ -148,10 +157,23 @@ kernel_rtm_ipv4 (int cmd, struct prefix *p, struct rib *rib)
 	      mask = &sin_mask;
 	    }
 
+#if defined HAVE_MPLS && defined __OpenBSD__
+	  if (nexthop->nh_label)
+	    {
+	      memset (&smpls, 0, sizeof (smpls));
+	      smpls.smpls_len = sizeof (smpls);
+	      smpls.smpls_family = AF_MPLS;
+	      smpls.smpls_label =
+		htonl (nexthop->nh_label->label[0] << MPLS_LABEL_OFFSET);
+	      smplsp = (union sockunion *)&smpls;
+	    }
+#endif
+
 	  error = rtm_write (cmd,
 			     (union sockunion *)&sin_dest, 
 			     (union sockunion *)mask, 
 			     gate ? (union sockunion *)&sin_gate : NULL,
+			     smplsp,
 			     ifindex,
 			     rib->flags,
 			     rib->metric);
@@ -333,6 +355,7 @@ kernel_rtm_ipv6 (int cmd, struct prefix *p, struct rib *rib)
 			(union sockunion *) &sin_dest,
 			(union sockunion *) mask,
 			gate ? (union sockunion *)&sin_gate : NULL,
+			NULL,
 			ifindex,
 			rib->flags,
 			rib->metric);
