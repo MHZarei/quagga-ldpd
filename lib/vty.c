@@ -2604,22 +2604,27 @@ vty_log_fixed (char *buf, size_t len)
 int
 vty_config_lock (struct vty *vty)
 {
+  return 1;
+#if 0
   if (vty_config == 0)
     {
       vty->config = 1;
       vty_config = 1;
     }
   return vty->config;
+#endif
 }
 
 int
 vty_config_unlock (struct vty *vty)
 {
+#if 0
   if (vty_config == 1 && vty->config == 1)
     {
       vty->config = 0;
       vty_config = 0;
     }
+#endif
   return vty->config;
 }
 
