@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in.
 
 AM_CPPFLAGS = -I.. -I$(top_srcdir) -I$(top_srcdir)/lib -I$(top_builddir)/lib
-AM_CFLAGS = $(WERROR)
+AM_CFLAGS = $(WERROR) $(ZEROMQ_CFLAGS)
 DEFS = @DEFS@ -DSYSCONFDIR=\"$(sysconfdir)/\"
 
 lib_LTLIBRARIES = libzebra.la
@@ -20,7 +20,7 @@ BUILT_SOURCES = memtypes.h route_types.h gitversion.h
 
 libzebra_la_DEPENDENCIES = @LIB_REGEX@
 
-libzebra_la_LIBADD = @LIB_REGEX@ @LIBCAP@
+libzebra_la_LIBADD = @LIB_REGEX@ @LIBCAP@ $(ZEROMQ_LIBS)
 
 pkginclude_HEADERS = \
 	buffer.h checksum.h command.h filter.h getopt.h hash.h \
@@ -41,6 +41,18 @@ EXTRA_DIST = \
 	memtypes.awk \
 	route_types.pl route_types.txt \
 	gitversion.pl
+
+if HAVE_ZEROMQ
+libzebra_la_SOURCES += qerr.c qzc.capnp-gen.c qzmq.c qzc.c
+pkginclude_HEADERS += qerr.h qzc.capnp-gen.h qzmq.h qzc.h
+BUILT_SOURCES += qzc.capnp-gen.c
+
+%.capnp-gen.c: %.capnp
+	$(AM_V_GEN) capnp compile -oc $<
+%.capnp-gen.h: %.capnp.c
+
+EXTRA_DIST += qzc.capnp
+endif
 
 memtypes.h: $(srcdir)/memtypes.c $(srcdir)/memtypes.awk
 	($(GAWK) -f $(srcdir)/memtypes.awk $(srcdir)/memtypes.c > $@)

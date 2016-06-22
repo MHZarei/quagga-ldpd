@@ -1,0 +1,109 @@
+import capnp "ldp.capnp";
+codegen header "ldpd.h";
+codegen python "quaggahandlers";
+
+@0x04789225d656a9b5;
+
+# LDP daemon root node
+node ldpd {
+	struct ldpd_conf = ldp_dupmerge;
+
+	# Get the ldpd configuration root.
+	wellknown ldp_root = ldpd_conf;
+
+	element config @1 {
+		type capnp LDP;
+	};
+
+	element iface_list @2 {
+		type nodelist ldp_interface = iface_list;
+		creatable config = iface_new_api;
+	};
+
+	element tnbr_list @3 {
+		type nodelist ldp_tnbr = tnbr_list;
+		creatable config = tnbr_new_api;
+	};
+
+	element nbrp_list @4 {
+		type nodelist ldp_nbrp = nbrp_list;
+		creatable config = nbrp_new_api;
+	};
+
+	element l2vpn_list @5 {
+		type nodelist ldp_l2vpn = l2vpn_list;
+		creatable config = l2vpn_new_api;
+	};
+};
+
+node ldp_interface {
+	struct iface = ldp_dupmerge;
+
+	element config @1 {
+		type capnp LDPIface;
+	};
+
+	destroyable = iface_del_api;
+};
+
+node ldp_tnbr {
+	struct tnbr = ldp_dupmerge;
+
+	element config @1 {
+		type capnp LDPTnbr;
+	};
+
+	destroyable = tnbr_del_api;
+};
+
+node ldp_nbrp {
+	struct nbr_params = ldp_dupmerge;
+
+	element config @1 {
+		type capnp LDPNbrp;
+	};
+
+	destroyable = nbrp_del_api;
+};
+
+node ldp_l2vpn {
+	struct l2vpn = ldp_dupmerge;
+
+	element config @1 {
+		type capnp  LDPL2VPN;
+	};
+
+	element if_list @2 {
+		type nodelist ldp_l2vpn_if = if_list;
+		creatable config = l2vpn_if_new_api;
+	};
+
+	element pw_list @3 {
+		type nodelist ldp_l2vpn_pw = pw_list;
+		creatable config = l2vpn_pw_new_api;
+	};
+
+	destroyable = l2vpn_del_api;
+};
+
+node ldp_l2vpn_if {
+	struct l2vpn_if = ldp_dupmerge;
+
+	element config @1 {
+		type capnp LDPL2VPNIface;
+	};
+
+	destroyable = l2vpn_if_del_api;
+};
+
+node ldp_l2vpn_pw {
+	struct l2vpn_pw = ldp_dupmerge;
+
+	element config @1 {
+		type capnp LDPL2VPNPseudowire;
+	};
+
+	destroyable = l2vpn_pw_del_api;
+};
+
+/* vim: set noet ts=8 syntax=quaggandef: */

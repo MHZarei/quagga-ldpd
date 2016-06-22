@@ -255,6 +255,8 @@ AC_ARG_ENABLE(snmp,
   AS_HELP_STRING([--enable-snmp=ARG], [enable SNMP support (smux or agentx)]))
 AC_ARG_WITH(libpam,
   AS_HELP_STRING([--with-libpam], [use libpam for PAM support in vtysh]))
+AC_ARG_WITH(zeromq,
+  AS_HELP_STRING([--with-zeromq], [enable ZeroMQ support through libzmq]))
 AC_ARG_ENABLE(tcp-zebra,
   AS_HELP_STRING([--enable-tcp-zebra], [enable TCP/IP socket connection between zebra and protocol daemon]))
 AC_ARG_ENABLE(ospfapi,
@@ -1514,6 +1516,35 @@ AC_CHECK_HEADER([malloc.h],
        AC_MSG_RESULT(no)
   )
  ], [], QUAGGA_INCLUDES)
+
+dnl ------
+dnl ZeroMQ
+dnl ------
+if test "x$with_zeromq" = "xyes"; then
+  PKG_CHECK_MODULES(ZEROMQ, [libzmq >= 4.0.0 c-capnproto >= 0.1], [
+    AC_DEFINE(HAVE_ZEROMQ, 1, [Enable ZeroMQ support])
+    ZEROMQ=true
+  ], [
+    AC_MSG_ERROR([configuration specifies --with-zeromq but libzmq was not found])
+  ])
+fi
+AM_CONDITIONAL([HAVE_ZEROMQ], test "x$ZEROMQ" = "xtrue")
+
+dnl -----------
+dnl Cap'n Proto
+dnl -----------
+if test "x$with_zeromq" = "xyes"; then
+  PKG_CHECK_MODULES(CAPNP, [capnp >= 0.5.99], [], [
+    AC_MSG_ERROR([configuration specifies --with-zeromq but cap'n proto not found or too old (0.5.99 or higher required)])
+  ])
+fi
+
+dnl -------------------
+dnl Python interpreters
+dnl -------------------
+if test "$with_zeromq" != "no"; then
+  AX_PYTHON2()
+fi
 
 dnl ----------
 dnl configure date

@@ -38,3 +38,7 @@ build
 m4/*.m4
 !m4/ax_sys_weak_alias.m4
 cscope.*
+*.pyc
+*.capnp-bin
+*-gen.c
+*-gen.h

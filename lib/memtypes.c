@@ -72,6 +72,8 @@ struct memory_list memory_list_lib[] =
   { MTYPE_VRF,			"VRF"				},
   { MTYPE_VRF_NAME,		"VRF name"			},
   { MTYPE_VRF_BITMAP,		"VRF bit-map"			},
+  { MTYPE_QZC_SOCK,		"QZC Socket"			},
+  { MTYPE_ZEROMQ_CB,		"ZeroMQ read callback"		},
   { -1, NULL },
 };
 
